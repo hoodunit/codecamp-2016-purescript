@@ -25,3 +25,15 @@ exports.createRawSocket = function(port){
     }
   }
 }
+
+exports.unsafeSend = function(socket){
+  return function(host){
+    return function(port){
+      return function(msg){
+        return function(){
+          socket.send(msg, port, host);
+        }
+      }
+    }
+  }
+}

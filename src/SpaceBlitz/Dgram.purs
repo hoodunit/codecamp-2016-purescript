@@ -4,6 +4,7 @@ module SpaceBlitz.Dgram
   , UDP
   , Socket
   , createSocket
+  , send
   ) where
 
 import Prelude
@@ -25,6 +26,7 @@ instance showUdpEvent :: Show UdpEvent where
   show (ErrorEvent error) = "Error '" ++ show error ++ "'"
 
 foreign import createRawSocket :: forall hEff eff. Int -> RawEventListener hEff -> Eff (udp :: UDP | eff) Socket
+foreign import unsafeSend :: forall eff. Socket -> String -> Int -> String -> Eff (udp :: UDP | eff) Unit
 
 createSocket :: forall hEff eff. Int -> UdpEventListener hEff -> Eff (udp :: UDP | eff) Socket
 createSocket port listener = createRawSocket port (parseRawEvent >>> listener)
@@ -36,3 +38,6 @@ parseRawEvent { event, rawData } = case event of
   "listening" -> ListeningEvent
   "close" -> CloseEvent
   _ -> ErrorEvent $ error $ "Unknown UDP event: { event: " ++ event ++ ", rawData: " ++ unsafeFromForeign rawData ++ " }"
+  
+send :: forall eff. Socket -> String -> Int -> String -> Eff (udp :: UDP | eff) Unit
+send = unsafeSend
