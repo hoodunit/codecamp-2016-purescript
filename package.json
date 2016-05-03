@@ -1,0 +1,19 @@
+{
+  "name": "spaceblitz",
+  "dependencies": {
+    "express": "^4.12.3"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "clean": "rm -rf output_server output_client public/client.js server.js .pulp-cache",
+    "build": "npm run clean && pulp build --main SpaceBlitz.Server --build-path output --to server.js",
+    "test": "pulp test",
+    "watch": "pulp --watch run --main SpaceBlitz.Server --build-path output",
+    "watch:test": "pulp --watch test"
+  },
+  "devDependencies": {
+    "bower": "^1.7.9",
+    "pulp": "^8.1.1"
+  }
+}

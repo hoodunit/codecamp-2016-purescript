@@ -11,6 +11,10 @@
     "output"
   ],
   "dependencies": {
-    "purescript-console": "^0.1.0"
+    "purescript-console": "^0.1.0",
+    "purescript-prelude": "~0.1.5",
+    "purescript-express": "~0.3.3",
+    "purescript-argonaut-core": "~0.2.3",
+    "purescript-argonaut-codecs": "~0.6.1"
   }
 }
