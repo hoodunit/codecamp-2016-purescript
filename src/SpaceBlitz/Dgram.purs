@@ -8,7 +8,7 @@ module SpaceBlitz.Dgram
 
 import Prelude
 import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Exception (Error)
+import Control.Monad.Eff.Exception (Error, error)
 import Data.Foreign (Foreign, unsafeFromForeign)
 
 foreign import data UDP :: !
@@ -35,3 +35,4 @@ parseRawEvent { event, rawData } = case event of
   "message" -> MessageEvent $ unsafeFromForeign rawData
   "listening" -> ListeningEvent
   "close" -> CloseEvent
+  _ -> ErrorEvent $ error $ "Unknown UDP event: { event: " ++ event ++ ", rawData: " ++ unsafeFromForeign rawData ++ " }"
