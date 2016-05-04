@@ -14,6 +14,12 @@
     "purescript-console": "^0.1.0",
     "purescript-prelude": "~0.1.5",
     "purescript-exceptions": "~0.3.4",
-    "purescript-foreign": "~0.7.2"
+    "purescript-foreign": "~0.7.2",
+    "purescript-argonaut-core": "~0.2.3",
+    "purescript-argonaut-codecs": "~0.6.1",
+    "purescript-generics": "~0.7.2",
+    "purescript-either": "~0.2.3",
+    "purescript-maps": "~0.5.7",
+    "purescript-maybe": "~0.3.5"
   }
 }
