@@ -21,6 +21,7 @@
     "purescript-either": "~0.2.3",
     "purescript-maps": "~0.5.7",
     "purescript-maybe": "~0.3.5",
-    "purescript-tuples": "~0.4.0"
+    "purescript-tuples": "~0.4.0",
+    "purescript-bifunctors": "~0.4.0"
   }
 }

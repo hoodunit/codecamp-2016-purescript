@@ -11,6 +11,7 @@ import Data.Argonaut.Core (fromObject, fromString, toObject, toString)
 import Data.Argonaut.Decode (class DecodeJson, decodeJson)
 import Data.Argonaut.Encode (class EncodeJson)
 import Data.Argonaut.Parser (jsonParser)
+import Data.Bifunctor (bimap)
 import Data.Either (Either(Left, Right))
 import Data.Generic (class Generic, gShow)
 import Data.Maybe (Maybe(Just, Nothing), maybe)
@@ -45,4 +46,5 @@ parseEvent (MessageEvent msg) = parseMessage msg
 parseEvent event = Left $ "Could not parse event: '" ++ show event ++ "'"
 
 parseMessage :: String -> Either String Message
-parseMessage raw = jsonParser raw >>= decodeJson
+parseMessage raw = (bimap errorMsg id $ jsonParser raw) >>= decodeJson
+  where errorMsg msg = "Error parsing Json from message '" ++ raw ++ "': " ++ msg
