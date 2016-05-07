@@ -23,6 +23,7 @@
     "purescript-maybe": "~0.3.5",
     "purescript-tuples": "~0.4.0",
     "purescript-bifunctors": "~0.4.0",
-    "purescript-foldable-traversable": "~0.4.2"
+    "purescript-foldable-traversable": "~0.4.2",
+    "purescript-control": "~0.3.2"
   }
 }

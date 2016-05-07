@@ -10,19 +10,22 @@ module SpaceBlitz.Message
   ) where
 
 import Prelude
+import Control.Bind ((=<<))
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Console (CONSOLE(), log)
-import Data.Argonaut.Core (Json, fromObject, fromString, toArray, toObject, toString)
-import Data.Argonaut.Decode (class DecodeJson, decodeJson)
+import Data.Argonaut.Core (Json, JArray, JObject, fromObject, fromString, toArray, toObject, toString)
+import Data.Argonaut.Decode (class DecodeJson, decodeJson, gDecodeJson)
 import Data.Argonaut.Encode (class EncodeJson)
 import Data.Argonaut.Parser (jsonParser)
 import Data.Bifunctor (bimap)
-import Data.Either (Either(Left, Right))
+import Data.Either (Either(Left, Right), either)
 import Data.Generic (class Generic, gShow)
-import Data.Maybe (Maybe(Just, Nothing), maybe)
+import Data.Maybe (Maybe(Just, Nothing), fromMaybe, maybe)
 import Data.StrMap as M
-import Data.Traversable (sequence)
+import Data.Traversable (sequence, traverse)
 import Data.Tuple (Tuple(Tuple))
+
+import Data.Argonaut.Combinators
 
 import SpaceBlitz.Dgram (UdpEvent(MessageEvent))
 
@@ -55,27 +58,37 @@ instance showServerMessage :: Show ServerMessage where
   show = gShow
   
 instance decodeJsonServerMessage :: DecodeJson ServerMessage where
-  decodeJson json = maybe (Left $ "Failed to parse message: " ++ show json) Right $ do
-    obj <- toObject json
-    msgType <- M.lookup "type" obj >>= toString
+  decodeJson json = do
+    obj <- asObject json
+    msgType <- obj .? "type"
     case msgType of
-      "gameInit" -> Just $ GameInit "nothing"
-      "fleetStatuses" -> do
-        statusesArr <- (M.lookup "statuses" obj) >>= toArray
-        statuses <- sequence $ map parseFleetStatus statusesArr
-        Just $ FleetStatuses statuses
-      "pong" -> Just Pong
-      _ -> Nothing
+      "fleetStatuses" -> decodeFleetStatuses obj
+      _ -> Left "Fail"
       
-parseFleetStatus :: Json -> Maybe FleetStatus
-parseFleetStatus json = do
-  obj <- toObject json
-  name <- M.lookup "name" obj >>= toString
-  statusStr <- M.lookup "status" obj >>= toString
+asObject :: Json -> Either String JObject
+asObject json = toObject json >>=? "Could not parse '" ++ show json ++ "' as object"
+      
+asArray :: Json -> Either String JArray
+asArray json = toArray json >>=? "Could not parse '" ++ show json ++ "' as an array"
+
+(>>=?) :: forall a. Maybe a -> String -> Either String a
+(>>=?) m msg = maybe (Left msg) Right m
+
+decodeFleetStatuses :: JObject -> Either String ServerMessage
+decodeFleetStatuses obj = do
+  statusesArr <- obj .? "statuses" >>= asArray
+  statuses <- sequence $ map decodeFleetStatus statusesArr
+  return $ FleetStatuses statuses
+
+decodeFleetStatus :: Json -> Either String FleetStatus
+decodeFleetStatus json = do
+  obj <- asObject json
+  name <- obj .? "name"
+  statusStr <- obj .? "status"
   status <- case statusStr of
-    "alive" -> Just Alive 
-    "destroyed" -> Just Destroyed
-    _ -> Nothing
+    "alive" -> Right Alive 
+    "destroyed" -> Right Destroyed
+    _ -> Left $ "Unrecognized status of type " ++ statusStr
   pure $ FleetStatus { name: name, status: status }
   
 derive instance genericClientMessage :: Generic ClientMessage
