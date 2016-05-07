@@ -25,8 +25,6 @@ import Data.StrMap as M
 import Data.Traversable (sequence, traverse)
 import Data.Tuple (Tuple(Tuple))
 
-import Data.Argonaut.Combinators
-
 import SpaceBlitz.Dgram (UdpEvent(MessageEvent))
 
 data ServerMessage = 
@@ -67,20 +65,11 @@ instance decodeJsonServerMessage :: DecodeJson ServerMessage where
    where
      errorMsg :: String -> String
      errorMsg failMsg = "Failed to parse server message '" ++ show json ++ "'\n    " ++ failMsg
-     
-asObject :: Json -> Either String JObject
-asObject json = toObject json >>=? "Could not parse '" ++ show json ++ "' as object"
-      
-asArray :: Json -> Either String JArray
-asArray json = toArray json >>=? "Could not parse '" ++ show json ++ "' as an array"
-
-(>>=?) :: forall a. Maybe a -> String -> Either String a
-(>>=?) m msg = maybe (Left msg) Right m
 
 decodeFleetStatuses :: JObject -> Either String ServerMessage
 decodeFleetStatuses obj = do
-  statusesArr <- obj .? "statuses" >>= asArray
-  statuses <- sequence $ map decodeFleetStatus statusesArr
+  statusesArr <- obj .? "statuses"
+  statuses <- parseArray decodeFleetStatus statusesArr
   return $ FleetStatuses statuses
 
 decodeFleetStatus :: Json -> Either String FleetStatus
@@ -91,8 +80,27 @@ decodeFleetStatus json = do
   status <- case statusStr of
     "alive" -> Right Alive 
     "destroyed" -> Right Destroyed
-    _ -> Left $ "Unrecognized status of type " ++ statusStr
+    _ -> Left $ "Unrecognized status '" ++ statusStr ++ "'"
   pure $ FleetStatus { name: name, status: status }
+  
+parseArray :: forall a. (Json -> Either String a) -> Json -> Either String (Array a)
+parseArray parseItem json = do
+  arr <- asArray json
+  sequence $ map parseItem arr
+     
+asObject :: Json -> Either String JObject
+asObject json = toObject json >>=? "Could not parse '" ++ show json ++ "' as an object"
+      
+asArray :: Json -> Either String JArray
+asArray json = toArray json >>=? "Could not parse '" ++ show json ++ "' as an array"
+
+infixl 1 >>=?
+(>>=?) :: forall a. Maybe a -> String -> Either String a
+(>>=?) m msg = maybe (Left msg) Right m
+
+infix 7 .?
+(.?) :: forall a. (DecodeJson a) => JObject -> String -> Either String a
+(.?) o s = maybe (Left $ "Expected field '" ++ show s ++ "' in '" ++ show o ++ "'") decodeJson (M.lookup s o)
   
 derive instance genericClientMessage :: Generic ClientMessage
 instance showClientMessage :: Show ClientMessage where
