@@ -58,13 +58,16 @@ instance showServerMessage :: Show ServerMessage where
   show = gShow
   
 instance decodeJsonServerMessage :: DecodeJson ServerMessage where
-  decodeJson json = do
+  decodeJson json = either (Left <<< errorMsg) Right $ do
     obj <- asObject json
     msgType <- obj .? "type"
     case msgType of
       "fleetStatuses" -> decodeFleetStatuses obj
       _ -> Left "Fail"
-      
+   where
+     errorMsg :: String -> String
+     errorMsg failMsg = "Failed to parse server message '" ++ show json ++ "'\n    " ++ failMsg
+     
 asObject :: Json -> Either String JObject
 asObject json = toObject json >>=? "Could not parse '" ++ show json ++ "' as object"
       
